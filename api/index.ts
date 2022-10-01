@@ -2,10 +2,9 @@ import { Bot, Context, webhookCallback } from "grammy";
 
 const TOKEN = process.env.TOKEN as string;
 
-const RE_TWITTER = /^https:\/\/twitter.com\/[^\/]+\/status\/(\d+)/;
-
-const THREAD_READER_URL = "https://threadreaderapp.com/thread/ID.html";
-const THREAD_READER_A = '<a href="URL">URL</a>';
+const TWITTER = "https://twitter.com";
+const NITTER = "https://nitter.it";
+const HREF = '<a href="URL">URL</a>';
 
 const bot = new Bot(TOKEN);
 
@@ -23,18 +22,16 @@ function handleTwitterLinks(context: Context) {
     if (e.type === "text_link") return [e.url];
     return [];
   });
-  const threadIds = urls.flatMap((url) => {
-    const match = url.match(RE_TWITTER);
-    return match ? match[1] : [];
-  });
-  const threadReaderUrls = threadIds.map((id) =>
-    THREAD_READER_URL.replace(/ID/g, id)
+  const twitters = urls.flatMap((url) =>
+    url.startsWith(TWITTER) ? [url] : []
   );
-  const threadReaderMessage = threadReaderUrls
-    .map((url) => THREAD_READER_A.replace(/URL/g, url))
-    .join("\n");
-  return context.reply(threadReaderMessage, {
-    reply_to_message_id: context.message.message_id,
-    parse_mode: "HTML",
-  });
+  if (twitters.length) {
+    const message = twitters
+      .map((url) => HREF.replace(/URL/g, url.replace(TWITTER, NITTER)))
+      .join("\n");
+    return context.reply(message, {
+      reply_to_message_id: context.message.message_id,
+      parse_mode: "HTML",
+    });
+  }
 }
